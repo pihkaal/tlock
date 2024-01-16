@@ -1,0 +1,16 @@
+# Project
+.notes
+
+# Build
+target
+debug
+
+# Cargo
+Cargo.lock
+
+# rustfmt
+**/*.rs.bk
+
+# MSVC Windows build
+.pdb
+
