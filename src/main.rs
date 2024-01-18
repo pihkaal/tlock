@@ -4,6 +4,7 @@ use std::{
     time::Duration,
 };
 
+use chrono::{Local, Timelike};
 use crossterm::{
     cursor,
     event::{self, Event, KeyCode, KeyModifiers},
@@ -65,7 +66,11 @@ fn main() -> io::Result<()> {
 fn render_frame() -> io::Result<()> {
     let (width, height) = terminal::size()?;
 
-    // Display centered 16:20 in white
+    let time = Local::now();
+    let hour = time.hour().to_string();
+    let minute = time.minute().to_string();
+
+    // Display current time
     let text_width = 6 + 7 + 6 + 7 + 6;
     let text_height = 5;
     let color = Color::White;
@@ -73,11 +78,23 @@ fn render_frame() -> io::Result<()> {
     let x = width / 2 - text_width / 2;
     let y = height / 2 - text_height / 2;
 
-    draw_symbol('1', x - 0 + 0 * 7, y, color)?;
-    draw_symbol('6', x - 0 + 1 * 7, y, color)?;
+    // Hour
+    if hour.len() == 1 {
+        draw_symbol('0', x - 0 + 0 * 7, y, color)?;
+    } else {
+        draw_symbol(hour.chars().nth(0).unwrap(), x - 0 + 0 * 7, y, color)?;
+    }
+    draw_symbol(hour.chars().last().unwrap(), x - 0 + 1 * 7, y, color)?;
+
     draw_symbol(':', x - 1 + 2 * 7, y, color)?;
-    draw_symbol('2', x - 2 + 3 * 7, y, color)?;
-    draw_symbol('0', x - 2 + 4 * 7, y, color)?;
+
+    // Minutes
+    if minute.len() == 1 {
+        draw_symbol('0', x - 2 + 3 * 7, y, color)?;
+    } else {
+        draw_symbol(minute.chars().nth(0).unwrap(), x - 2 + 3 * 7, y, color)?;
+    }
+    draw_symbol(minute.chars().last().unwrap(), x - 2 + 4 * 7, y, color)?;
 
     return Ok(());
 }
