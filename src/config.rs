@@ -30,7 +30,10 @@ fn load_color(ini: &Ini) -> Color {
             let color = ini.getint("styling", "color_term").unwrap().unwrap();
             return load_term_color(color);
         }
-        "rgb" => todo!(),
+        "hex" => {
+            let color = ini.get("styling", "color_hex").unwrap();
+            return load_hex_color(&color);
+        }
         "ansi" => todo!(),
         _ => panic!("ERROR: Invalid color mode: {}", color_mode),
     }
@@ -56,4 +59,31 @@ fn load_term_color(value: i64) -> Color {
         15 => Color::White,
         _ => panic!("ERROR: Invalid terminal color: {}", value),
     }
+}
+
+fn load_hex_color(value: &str) -> Color {
+    // Expand #XXX colors
+    let value = if value.len() == 3 {
+        format!(
+            "{}{}{}{}{}{}",
+            &value[0..1],
+            &value[0..1],
+            &value[1..2],
+            &value[1..2],
+            &value[2..3],
+            &value[2..3]
+        )
+    } else {
+        value.to_owned()
+    };
+
+    if value.len() != 6 {
+        panic!("ERROR: Invalid hex color: {}", value);
+    }
+
+    let r = u8::from_str_radix(&value[0..2], 16).unwrap();
+    let g = u8::from_str_radix(&value[2..4], 16).unwrap();
+    let b = u8::from_str_radix(&value[4..6], 16).unwrap();
+
+    return Color::Rgb { r, g, b };
 }
