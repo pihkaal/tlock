@@ -12,6 +12,8 @@ use crossterm::{
     terminal::{self, ClearType},
 };
 
+mod symbols;
+
 fn main() -> io::Result<()> {
     let mut stdout = io::stdout();
 
@@ -61,17 +63,47 @@ fn main() -> io::Result<()> {
 }
 
 fn render_frame() -> io::Result<()> {
-    let mut stdout = io::stdout();
     let (width, height) = terminal::size()?;
 
-    // Render red X at middle of screen
-    queue!(
-        stdout,
-        cursor::MoveTo(width / 2, height / 2),
-        style::SetForegroundColor(Color::Red)
-    )?;
+    // Display centered 16:20 in white
+    let text_width = 6 + 7 + 6 + 7 + 6;
+    let text_height = 5;
+    let color = Color::White;
 
-    write!(stdout, "X")?;
+    let x = width / 2 - text_width / 2;
+    let y = height / 2 - text_height / 2;
+
+    draw_symbol('1', x - 0 + 0 * 7, y, color)?;
+    draw_symbol('6', x - 0 + 1 * 7, y, color)?;
+    draw_symbol(':', x - 1 + 2 * 7, y, color)?;
+    draw_symbol('2', x - 2 + 3 * 7, y, color)?;
+    draw_symbol('0', x - 2 + 4 * 7, y, color)?;
+
+    return Ok(());
+}
+
+fn draw_symbol(symbol: char, x: u16, y: u16, color: Color) -> io::Result<()> {
+    let mut stdout = io::stdout();
+
+    let data = symbols::symbol_to_render_data(symbol);
+
+    for oy in 0..data.len() {
+        for ox in 0..data[oy].len() {
+            if data[oy][ox] {
+                let cx = ox as u16;
+                let cy = oy as u16;
+
+                // Render cursor at position by setting background color and using space
+                queue!(
+                    stdout,
+                    cursor::MoveTo(x + cx, y + cy),
+                    style::SetBackgroundColor(color)
+                )?;
+                write!(stdout, " ")?;
+                queue!(stdout, style::ResetColor)?;
+            }
+        }
+    }
 
     return Ok(());
 }
