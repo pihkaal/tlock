@@ -103,7 +103,10 @@ fn render_frame(config: &Config) -> io::Result<()> {
     draw_symbol(minute.chars().last().unwrap(), x - 2 + 4 * 7, y, color)?;
 
     // Display date
-    let date = time.date_naive().format("%Y-%m-%d").to_string();
+    let date = time
+        .date_naive()
+        .format(&config.date_format.to_owned())
+        .to_string();
     let mut stdout = io::stdout();
 
     let x = width / 2 - (date.len() as u16) / 2;

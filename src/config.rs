@@ -7,6 +7,7 @@ pub struct Config {
     pub be_polite: bool,
     pub fps: u64,
     pub color: Color,
+    pub date_format: String,
 }
 
 pub fn load_from_file(path: &str) -> Config {
@@ -17,6 +18,7 @@ pub fn load_from_file(path: &str) -> Config {
         be_polite: ini.getbool("general", "polite").unwrap().unwrap(),
         fps: ini.getuint("general", "fps").unwrap().unwrap(),
         color: load_color(&ini),
+        date_format: ini.get("format", "date").unwrap(),
     };
 
     return config;

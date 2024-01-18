@@ -10,6 +10,13 @@ polite=true
 # Value: int
 fps=30
 
+
+[format]
+
+# Date format
+# Value: TODO
+date=%Y-%m-%d
+
 [styling]
 
 # Which color mode to use
