@@ -1,0 +1,32 @@
+# tlock config file
+
+[general]
+
+# Say goodbye when you press CTRL-C
+# Value: true, false
+polite=true
+
+# FPS
+# Value: int
+fps=30
+
+[styling]
+
+# Which color mode to use
+# Value: "term", "rgb" or "ansi"
+color_mode=term
+
+# Loaded if color_mode is set to "term"
+# Value: 0-15
+color_term=7
+
+# Loaded if color_mode is set to "rgb"
+# Value: 0-255
+color_r=255
+color_g=0
+color_b=0
+
+# Loaded if color_mode is set to "ansi"
+# Value: 0-255
+color_ansi=100
+

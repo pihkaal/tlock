@@ -5,6 +5,7 @@ use std::{
 };
 
 use chrono::{Local, Timelike};
+use config::Config;
 use crossterm::{
     cursor,
     event::{self, Event, KeyCode, KeyModifiers},
@@ -13,9 +14,13 @@ use crossterm::{
     terminal::{self, ClearType},
 };
 
+mod config;
 mod symbols;
 
 fn main() -> io::Result<()> {
+    // Load config
+    let config = config::load_from_file("config");
+
     let mut stdout = io::stdout();
 
     // Switch to alternate screen, hide the cursor and enable raw mode
@@ -45,12 +50,11 @@ fn main() -> io::Result<()> {
         queue!(stdout, terminal::Clear(ClearType::All))?;
 
         // Render
-        render_frame()?;
+        render_frame(&config)?;
 
         stdout.flush()?;
 
-        // 30fps
-        thread::sleep(Duration::from_millis(33));
+        thread::sleep(Duration::from_millis(1000 / config.fps));
     }
 
     // Disale raw mode, leave the alternate screen and show the cursor back
@@ -58,12 +62,14 @@ fn main() -> io::Result<()> {
     execute!(stdout, terminal::LeaveAlternateScreen, cursor::Show)?;
 
     // Be polite
-    println!("CTRL-C pressed, bye!\n");
+    if config.be_polite {
+        println!("CTRL-C pressed, bye!\n");
+    }
 
     return Ok(());
 }
 
-fn render_frame() -> io::Result<()> {
+fn render_frame(config: &Config) -> io::Result<()> {
     let (width, height) = terminal::size()?;
 
     let time = Local::now();
@@ -73,7 +79,7 @@ fn render_frame() -> io::Result<()> {
     // Display current time
     let text_width = 6 + 7 + 6 + 7 + 6;
     let text_height = 5;
-    let color = Color::White;
+    let color = config.color;
 
     let x = width / 2 - text_width / 2;
     let y = height / 2 - text_height / 2;
