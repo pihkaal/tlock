@@ -14,7 +14,7 @@ fps=30
 
 # Which color mode to use
 # Value: "term", "hex" or "ansi"
-color_mode=hex
+color_mode=ansi
 
 # Loaded if color_mode is set to "term"
 # Value: 0-15

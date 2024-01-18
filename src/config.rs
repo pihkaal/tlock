@@ -34,7 +34,10 @@ fn load_color(ini: &Ini) -> Color {
             let color = ini.get("styling", "color_hex").unwrap();
             return load_hex_color(&color);
         }
-        "ansi" => todo!(),
+        "ansi" => {
+            let color = ini.getint("styling", "color_ansi").unwrap().unwrap();
+            return load_ansi_color(color);
+        }
         _ => panic!("ERROR: Invalid color mode: {}", color_mode),
     }
 }
@@ -86,4 +89,8 @@ fn load_hex_color(value: &str) -> Color {
     let b = u8::from_str_radix(&value[4..6], 16).unwrap();
 
     return Color::Rgb { r, g, b };
+}
+
+fn load_ansi_color(value: i64) -> Color {
+    return Color::AnsiValue(value.try_into().unwrap());
 }
