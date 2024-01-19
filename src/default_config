@@ -25,8 +25,8 @@ time=%H:%M
 [styling]
 
 # Which color mode to use
-# Value: "term", "hex" or "ansi"
-color_mode=term
+# Value: "term", "hex", "ansi" or "gradient"
+color_mode=gradient
 
 # Loaded if color_mode is set to "term"
 # Value: 0-15
@@ -40,3 +40,12 @@ color_hex=e6ecfe
 # Value: 0-255
 color_ansi=100
 
+
+[gradient]
+
+gradient_steps=256
+gradient_loop=true
+
+gradient_key_0=ff0000
+gradient_key_1=00ff00
+gradient_key_2=0000ff

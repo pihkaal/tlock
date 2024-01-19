@@ -52,7 +52,7 @@ fn main() -> io::Result<()> {
         panic!("ERROR: Configuration file not found");
     }
 
-    let config = config::load_from_file(&config_file.to_str().unwrap());
+    let mut config = config::load_from_file(&config_file.to_str().unwrap());
 
     let mut stdout = io::stdout();
 
@@ -85,6 +85,8 @@ fn main() -> io::Result<()> {
         // Render
         render_frame(&config)?;
 
+        config.color.update();
+
         stdout.flush()?;
 
         thread::sleep(Duration::from_millis(1000 / config.fps));
@@ -112,7 +114,7 @@ fn render_frame(config: &Config) -> io::Result<()> {
 
     let text_width = draw_time_width(&time);
     let text_height = 5;
-    let color = config.color;
+    let color = config.color.get_value();
 
     let x = width / 2 - text_width / 2;
     let y = height / 2 - text_height / 2;
