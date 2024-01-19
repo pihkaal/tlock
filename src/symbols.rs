@@ -120,11 +120,11 @@ const DASH: [[bool; 6]; 5] = [
 ];
 
 const ERR: [[bool; 6]; 5] = [
-    [X, X, X, X, X, X],
-    [X, X, O, O, O, O],
-    [X, X, X, X, X, X],
-    [X, X, O, O, O, O],
-    [X, X, X, X, X, X],
+    [X, X, O, O, X, X],
+    [O, X, X, X, X, O],
+    [O, O, X, X, O, O],
+    [O, X, X, X, X, O],
+    [X, X, O, O, X, X],
 ];
 
 const SPACE: [[bool; 6]; 5] = [
