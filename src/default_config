@@ -15,7 +15,12 @@ fps=30
 
 # Date format
 # Value: TODO
-date=%Y-%m-%d
+date=Today is the %-dth of %B, %Y :)
+
+# Time format
+# Value: TODO
+time=%H:%M
+
 
 [styling]
 

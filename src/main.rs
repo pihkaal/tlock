@@ -7,7 +7,7 @@ use std::{
     time::Duration,
 };
 
-use chrono::{Local, Timelike};
+use chrono::Local;
 use clap::Parser;
 use config::Config;
 use crossterm::{
@@ -105,58 +105,64 @@ fn main() -> io::Result<()> {
 fn render_frame(config: &Config) -> io::Result<()> {
     let (width, height) = terminal::size()?;
 
-    let time = Local::now();
-    let hour = time.hour().to_string();
-    let minute = time.minute().to_string();
+    let date_time = Local::now();
 
-    // Display current time
-    let text_width = 6 + 7 + 6 + 7 + 6;
+    // Display time
+    let time = date_time.time().format(&config.time_format).to_string();
+
+    let text_width = draw_time_width(&time);
     let text_height = 5;
     let color = config.color;
 
     let x = width / 2 - text_width / 2;
     let y = height / 2 - text_height / 2;
-
-    // Hour
-    if hour.len() == 1 {
-        draw_symbol('0', x - 0 + 0 * 7, y, color)?;
-    } else {
-        draw_symbol(hour.chars().nth(0).unwrap(), x - 0 + 0 * 7, y, color)?;
-    }
-    draw_symbol(hour.chars().last().unwrap(), x - 0 + 1 * 7, y, color)?;
-
-    draw_symbol(':', x - 1 + 2 * 7, y, color)?;
-
-    // Minutes
-    if minute.len() == 1 {
-        draw_symbol('0', x - 2 + 3 * 7, y, color)?;
-    } else {
-        draw_symbol(minute.chars().nth(0).unwrap(), x - 2 + 3 * 7, y, color)?;
-    }
-    draw_symbol(minute.chars().last().unwrap(), x - 2 + 4 * 7, y, color)?;
+    draw_time(&time, x, y, color)?;
 
     // Display date
-    let date = time
+    let date = date_time
         .date_naive()
         .format(&config.date_format.to_owned())
         .to_string();
-    let mut stdout = io::stdout();
 
     let x = width / 2 - (date.len() as u16) / 2;
     let y = height / 2 + text_height / 2 + 2;
-
-    queue!(
-        stdout,
-        cursor::MoveTo(x, y),
-        style::SetForegroundColor(color),
-        style::SetAttribute(Attribute::Bold)
-    )?;
-    write!(stdout, "{}", date)?;
+    draw_date(&date, x, y, color)?;
 
     return Ok(());
 }
 
-fn draw_symbol(symbol: char, x: u16, y: u16, color: Color) -> io::Result<()> {
+fn draw_time_width(time: &str) -> u16 {
+    if time.len() == 0 {
+        return 0;
+    }
+
+    let mut w = 0;
+    for c in time.chars() {
+        w += if c == ':' { 6 } else { 7 };
+    }
+
+    w -= if time.len() == 1 { 1 } else { 2 };
+    return w;
+}
+
+fn draw_time(time: &str, mut x: u16, y: u16, color: Color) -> io::Result<()> {
+    for c in time.chars() {
+        if c == ':' {
+            x -= 1;
+        }
+
+        draw_time_symbol(c, x, y, color)?;
+        x += 7;
+
+        if c == ':' {
+            x -= 1;
+        }
+    }
+
+    return Ok(());
+}
+
+fn draw_time_symbol(symbol: char, x: u16, y: u16, color: Color) -> io::Result<()> {
     let mut stdout = io::stdout();
 
     let data = symbols::symbol_to_render_data(symbol);
@@ -178,6 +184,20 @@ fn draw_symbol(symbol: char, x: u16, y: u16, color: Color) -> io::Result<()> {
             }
         }
     }
+
+    return Ok(());
+}
+
+fn draw_date(date: &str, x: u16, y: u16, color: Color) -> io::Result<()> {
+    let mut stdout = io::stdout();
+
+    queue!(
+        stdout,
+        cursor::MoveTo(x, y),
+        style::SetForegroundColor(color),
+        style::SetAttribute(Attribute::Bold)
+    )?;
+    write!(stdout, "{}", date)?;
 
     return Ok(());
 }
