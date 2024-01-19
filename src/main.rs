@@ -1,10 +1,14 @@
+use core::panic;
 use std::{
+    fs,
     io::{self, Write},
+    path::PathBuf,
     thread,
     time::Duration,
 };
 
 use chrono::{Local, Timelike};
+use clap::Parser;
 use config::Config;
 use crossterm::{
     cursor,
@@ -13,13 +17,42 @@ use crossterm::{
     style::{self, Attribute, Color},
     terminal::{self, ClearType},
 };
+use dirs::config_dir;
 
 mod config;
 mod symbols;
 
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    #[arg(short, long, value_name = "FILE")]
+    config: Option<String>,
+}
+
+const DEFAULT_CONFIG: &str = include_str!("default_config");
+
 fn main() -> io::Result<()> {
+    let args = Args::parse();
+
     // Load config
-    let config = config::load_from_file("config");
+    let config_file = if let Some(custom_config) = args.config {
+        PathBuf::from(custom_config)
+    } else {
+        let config_dir = config_dir().unwrap().join("tlock");
+        let config_file = config_dir.clone().join("config");
+        if !config_file.exists() {
+            // Generate default config
+            let _ = fs::create_dir(config_dir);
+            let _ = fs::write(config_file.clone(), DEFAULT_CONFIG);
+        }
+
+        config_file
+    };
+    if !config_file.exists() {
+        panic!("ERROR: Configuration file not found");
+    }
+
+    let config = config::load_from_file(&config_file.to_str().unwrap());
 
     let mut stdout = io::stdout();
 
