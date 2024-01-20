@@ -1,4 +1,7 @@
-pub fn symbol_to_render_data(ch: char) -> [[bool; 6]; 5] {
+pub const SYMBOL_WIDTH: usize = 6;
+pub const SYMBOL_HEIGHT: usize = 5;
+
+pub fn symbol_to_render_data(ch: char) -> [[bool; SYMBOL_WIDTH]; SYMBOL_HEIGHT] {
     match ch {
         '1' => ONE,
         '2' => TWO,
@@ -23,7 +26,7 @@ pub fn symbol_to_render_data(ch: char) -> [[bool; 6]; 5] {
 const O: bool = false;
 const X: bool = true;
 
-const ONE: [[bool; 6]; 5] = [
+const ONE: [[bool; SYMBOL_WIDTH]; SYMBOL_HEIGHT] = [
     [O, O, O, O, X, X],
     [O, O, O, O, X, X],
     [O, O, O, O, X, X],
@@ -31,7 +34,7 @@ const ONE: [[bool; 6]; 5] = [
     [O, O, O, O, X, X],
 ];
 
-const TWO: [[bool; 6]; 5] = [
+const TWO: [[bool; SYMBOL_WIDTH]; SYMBOL_HEIGHT] = [
     [X, X, X, X, X, X],
     [O, O, O, O, X, X],
     [X, X, X, X, X, X],
@@ -39,7 +42,7 @@ const TWO: [[bool; 6]; 5] = [
     [X, X, X, X, X, X],
 ];
 
-const THREE: [[bool; 6]; 5] = [
+const THREE: [[bool; SYMBOL_WIDTH]; SYMBOL_HEIGHT] = [
     [X, X, X, X, X, X],
     [O, O, O, O, X, X],
     [X, X, X, X, X, X],
@@ -47,7 +50,7 @@ const THREE: [[bool; 6]; 5] = [
     [X, X, X, X, X, X],
 ];
 
-const FOUR: [[bool; 6]; 5] = [
+const FOUR: [[bool; SYMBOL_WIDTH]; SYMBOL_HEIGHT] = [
     [X, X, O, O, X, X],
     [X, X, O, O, X, X],
     [X, X, X, X, X, X],
@@ -55,7 +58,7 @@ const FOUR: [[bool; 6]; 5] = [
     [O, O, O, O, X, X],
 ];
 
-const FIVE: [[bool; 6]; 5] = [
+const FIVE: [[bool; SYMBOL_WIDTH]; SYMBOL_HEIGHT] = [
     [X, X, X, X, X, X],
     [X, X, O, O, O, O],
     [X, X, X, X, X, X],
@@ -63,7 +66,7 @@ const FIVE: [[bool; 6]; 5] = [
     [X, X, X, X, X, X],
 ];
 
-const SIX: [[bool; 6]; 5] = [
+const SIX: [[bool; SYMBOL_WIDTH]; SYMBOL_HEIGHT] = [
     [X, X, X, X, X, X],
     [X, X, O, O, O, O],
     [X, X, X, X, X, X],
@@ -71,7 +74,7 @@ const SIX: [[bool; 6]; 5] = [
     [X, X, X, X, X, X],
 ];
 
-const SEVEN: [[bool; 6]; 5] = [
+const SEVEN: [[bool; SYMBOL_WIDTH]; SYMBOL_HEIGHT] = [
     [X, X, X, X, X, X],
     [O, O, O, O, X, X],
     [O, O, O, O, X, X],
@@ -79,7 +82,7 @@ const SEVEN: [[bool; 6]; 5] = [
     [O, O, O, O, X, X],
 ];
 
-const EIGHT: [[bool; 6]; 5] = [
+const EIGHT: [[bool; SYMBOL_WIDTH]; SYMBOL_HEIGHT] = [
     [X, X, X, X, X, X],
     [X, X, O, O, X, X],
     [X, X, X, X, X, X],
@@ -87,7 +90,7 @@ const EIGHT: [[bool; 6]; 5] = [
     [X, X, X, X, X, X],
 ];
 
-const NINE: [[bool; 6]; 5] = [
+const NINE: [[bool; SYMBOL_WIDTH]; SYMBOL_HEIGHT] = [
     [X, X, X, X, X, X],
     [X, X, O, O, X, X],
     [X, X, X, X, X, X],
@@ -95,7 +98,7 @@ const NINE: [[bool; 6]; 5] = [
     [X, X, X, X, X, X],
 ];
 
-const ZERO: [[bool; 6]; 5] = [
+const ZERO: [[bool; SYMBOL_WIDTH]; SYMBOL_HEIGHT] = [
     [X, X, X, X, X, X],
     [X, X, O, O, X, X],
     [X, X, O, O, X, X],
@@ -103,7 +106,7 @@ const ZERO: [[bool; 6]; 5] = [
     [X, X, X, X, X, X],
 ];
 
-const DIV: [[bool; 6]; 5] = [
+const DIV: [[bool; SYMBOL_WIDTH]; SYMBOL_HEIGHT] = [
     [O, O, O, O, O, O],
     [O, O, X, X, O, O],
     [O, O, O, O, O, O],
@@ -111,7 +114,7 @@ const DIV: [[bool; 6]; 5] = [
     [O, O, O, O, O, O],
 ];
 
-const DASH: [[bool; 6]; 5] = [
+const DASH: [[bool; SYMBOL_WIDTH]; SYMBOL_HEIGHT] = [
     [O, O, O, O, O, O],
     [O, O, O, O, O, O],
     [O, X, X, X, X, O],
@@ -119,7 +122,7 @@ const DASH: [[bool; 6]; 5] = [
     [O, O, O, O, O, O],
 ];
 
-const ERR: [[bool; 6]; 5] = [
+const ERR: [[bool; SYMBOL_WIDTH]; SYMBOL_HEIGHT] = [
     [X, X, O, O, X, X],
     [O, X, X, X, X, O],
     [O, O, X, X, O, O],
@@ -127,7 +130,7 @@ const ERR: [[bool; 6]; 5] = [
     [X, X, O, O, X, X],
 ];
 
-const SPACE: [[bool; 6]; 5] = [
+const SPACE: [[bool; SYMBOL_WIDTH]; SYMBOL_HEIGHT] = [
     [O, O, O, O, O, O],
     [O, O, O, O, O, O],
     [O, O, O, O, O, O],
@@ -135,7 +138,7 @@ const SPACE: [[bool; 6]; 5] = [
     [O, O, O, O, O, O],
 ];
 
-const A: [[bool; 6]; 5] = [
+const A: [[bool; SYMBOL_WIDTH]; SYMBOL_HEIGHT] = [
     [X, X, X, X, X, X],
     [X, X, O, O, X, X],
     [X, X, X, X, X, X],
@@ -143,7 +146,7 @@ const A: [[bool; 6]; 5] = [
     [X, X, O, O, X, X],
 ];
 
-const P: [[bool; 6]; 5] = [
+const P: [[bool; SYMBOL_WIDTH]; SYMBOL_HEIGHT] = [
     [X, X, X, X, X, X],
     [X, X, O, O, X, X],
     [X, X, X, X, X, X],
@@ -151,7 +154,7 @@ const P: [[bool; 6]; 5] = [
     [X, X, O, O, O, O],
 ];
 
-const M: [[bool; 6]; 5] = [
+const M: [[bool; SYMBOL_WIDTH]; SYMBOL_HEIGHT] = [
     [X, X, X, X, X, X],
     [X, X, O, X, O, X],
     [X, X, O, X, O, X],

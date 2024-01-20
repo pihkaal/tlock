@@ -4,11 +4,11 @@ use std::{
     path::PathBuf,
     sync::atomic::Ordering,
     thread,
-    time::Duration,
+    time::{self, Duration},
 };
 
 use atomic_enum::atomic_enum;
-use chrono::Local;
+use chrono;
 use clap::{Parser, Subcommand};
 use config::{write_default_config, Config};
 use crossterm::{
@@ -46,6 +46,7 @@ struct Cli {
 #[derive(Subcommand, Debug)]
 enum Commands {
     Debug {},
+    Chrono {},
 }
 
 #[atomic_enum]
@@ -53,6 +54,7 @@ enum Commands {
 pub enum AppMode {
     Clock = 0,
     Debug,
+    Chrono,
 }
 
 static APP_MODE: AtomicAppMode = AtomicAppMode::new(AppMode::Debug);
@@ -72,7 +74,8 @@ fn main() -> io::Result<()> {
         Some(Commands::Debug {}) => {
             set_app_mode(AppMode::Debug);
         }
-        _ => {}
+        Some(Commands::Chrono {}) => set_app_mode(AppMode::Chrono),
+        _ => set_app_mode(AppMode::Clock),
     }
 
     // Load config
@@ -118,8 +121,8 @@ fn main() -> io::Result<()> {
     let mut config = config::load_from_file(config_file);
     let mut stdout = io::stdout();
 
-    match &cli.command {
-        Some(Commands::Debug {}) => {
+    match get_app_mode() {
+        AppMode::Debug => {
             print_debug_infos(&mut config)?;
             return Ok(());
         }
@@ -129,6 +132,8 @@ fn main() -> io::Result<()> {
     // Switch to alternate screen, hide the cursor and enable raw mode
     execute!(stdout, terminal::EnterAlternateScreen, cursor::Hide)?;
     let _ = terminal::enable_raw_mode()?;
+
+    let start_time = time::Instant::now();
 
     // Main loop
     let mut quit = false;
@@ -153,7 +158,11 @@ fn main() -> io::Result<()> {
         queue!(stdout, terminal::Clear(ClearType::All))?;
 
         // Render
-        render_frame(&config)?;
+        match get_app_mode() {
+            AppMode::Clock => render_clock(&config)?,
+            AppMode::Chrono => render_chrono(&config, &start_time)?,
+            AppMode::Debug => unreachable!(),
+        };
 
         config.color.update();
 
@@ -174,31 +183,36 @@ fn main() -> io::Result<()> {
     return Ok(());
 }
 
-fn render_frame(config: &Config) -> io::Result<()> {
-    let (width, height) = terminal::size()?;
+fn render_clock(config: &Config) -> io::Result<()> {
+    let color = config.color.get_value();
 
-    let date_time = Local::now();
+    let date_time = chrono::Local::now();
 
     // Display time
     let time = date_time.time().format(&config.time_format).to_string();
-
-    let text_width = draw_time_width(&time);
-    let text_height = 5;
-    let color = config.color.get_value();
-
-    let x = width / 2 - text_width / 2;
-    let y = height / 2 - text_height / 2;
-    draw_time(&time, x, y, color)?;
+    draw_time(&time, color)?;
 
     // Display date
     let date = date_time
         .date_naive()
         .format(&config.date_format.to_owned())
         .to_string();
+    draw_date(&date, color)?;
 
-    let x = width / 2 - (date.len() as u16) / 2;
-    let y = height / 2 + text_height / 2 + 2;
-    draw_date(&date, x, y, color)?;
+    return Ok(());
+}
+
+fn render_chrono(config: &Config, start_time: &time::Instant) -> io::Result<()> {
+    let color = config.color.get_value();
+
+    // Display time
+    let seconds = start_time.elapsed().as_secs();
+    let hours = seconds / 3600;
+    let minutes = (seconds % 3600) / 60;
+    let seconds = seconds % 60;
+
+    let elapsed = format!("{:02}:{:02}:{:02}", hours, minutes, seconds);
+    draw_time(&elapsed, color)?;
 
     return Ok(());
 }
@@ -210,14 +224,25 @@ fn draw_time_width(time: &str) -> u16 {
 
     let mut w = 0;
     for c in time.chars() {
-        w += if c == ':' { 6 } else { 7 };
+        w += if c == ':' {
+            symbols::SYMBOL_HEIGHT
+        } else {
+            symbols::SYMBOL_WIDTH + 1
+        };
     }
 
     w -= if time.len() == 1 { 1 } else { 2 };
-    return w;
+    return w.try_into().unwrap();
 }
 
-fn draw_time(time: &str, mut x: u16, y: u16, color: Color) -> io::Result<()> {
+fn draw_time(time: &str, color: Color) -> io::Result<()> {
+    let (width, height) = terminal::size()?;
+
+    let text_width = draw_time_width(&time);
+    let text_height = 5;
+
+    let mut x = width / 2 - text_width / 2;
+    let y = height / 2 - text_height / 2;
     for c in time.chars() {
         if c == ':' {
             x -= 1;
@@ -260,8 +285,13 @@ fn draw_time_symbol(symbol: char, x: u16, y: u16, color: Color) -> io::Result<()
     return Ok(());
 }
 
-fn draw_date(date: &str, x: u16, y: u16, color: Color) -> io::Result<()> {
+fn draw_date(date: &str, color: Color) -> io::Result<()> {
     let mut stdout = io::stdout();
+
+    let (width, height) = terminal::size()?;
+
+    let x = width / 2 - (date.len() as u16) / 2;
+    let y = height / 2 + symbols::SYMBOL_HEIGHT as u16 / 2 + 2;
 
     queue!(
         stdout,
