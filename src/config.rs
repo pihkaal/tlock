@@ -1,4 +1,5 @@
 use core::panic;
+use std::{fs, path::PathBuf};
 
 use crossterm::style::Color;
 use ini::configparser::ini::Ini;
@@ -33,9 +34,11 @@ pub struct Config {
     pub date_format: String,
 }
 
-pub fn load_from_file(path: &str) -> Config {
+const DEFAULT_CONFIG: &str = include_str!("default_config");
+
+pub fn load_from_file(path: PathBuf) -> Config {
     let mut ini = Ini::new();
-    ini.load(path).unwrap();
+    ini.load(&path.to_str().unwrap()).unwrap();
 
     let config = Config {
         be_polite: ini.getbool("general", "polite").unwrap().unwrap(),
@@ -46,6 +49,12 @@ pub fn load_from_file(path: &str) -> Config {
     };
 
     return config;
+}
+
+pub fn write_default_config(path: PathBuf) -> () {
+    let parent = path.parent().unwrap();
+    let _ = fs::create_dir_all(parent);
+    let _ = fs::write(path, DEFAULT_CONFIG);
 }
 
 fn load_color(ini: &Ini) -> ComputableColor {

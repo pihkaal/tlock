@@ -1,6 +1,5 @@
 use core::panic;
 use std::{
-    fs,
     io::{self, Write},
     path::PathBuf,
     thread,
@@ -9,7 +8,7 @@ use std::{
 
 use chrono::Local;
 use clap::Parser;
-use config::Config;
+use config::{write_default_config, Config};
 use crossterm::{
     cursor,
     event::{self, Event, KeyCode, KeyModifiers},
@@ -27,32 +26,58 @@ mod symbols;
 struct Args {
     #[arg(short, long, value_name = "FILE")]
     config: Option<String>,
-}
 
-const DEFAULT_CONFIG: &str = include_str!("default_config");
+    #[arg(short, long, action)]
+    regenerate_default: bool,
+
+    #[arg(short, long, action)]
+    yes: bool,
+}
 
 fn main() -> io::Result<()> {
     let args = Args::parse();
 
     // Load config
+    let mut default_generated = false;
     let config_file = if let Some(custom_config) = args.config {
         PathBuf::from(custom_config)
     } else {
-        let config_dir = config_dir().unwrap().join("tlock");
-        let config_file = config_dir.clone().join("config");
+        let config_file = config_dir().unwrap().join("tlock").join("config");
         if !config_file.exists() {
-            // Generate default config
-            let _ = fs::create_dir(config_dir);
-            let _ = fs::write(config_file.clone(), DEFAULT_CONFIG);
+            write_default_config(config_file.clone());
+            default_generated = true;
         }
 
         config_file
     };
+
+    if args.regenerate_default {
+        if !default_generated && config_file.exists() && !args.yes {
+            println!("A config file is already located at {:?}", config_file);
+            print!("Do you really want to recreate it ? [y/N] ");
+
+            let _ = io::stdout().flush();
+
+            let mut input = String::new();
+            let _ = io::stdin().read_line(&mut input);
+
+            let response = input.trim().to_lowercase();
+            if response != "y" {
+                println!("Cancelled.");
+                return Ok(());
+            }
+        }
+
+        write_default_config(config_file.clone());
+        println!("Done.");
+        return Ok(());
+    }
+
     if !config_file.exists() {
         panic!("ERROR: Configuration file not found");
     }
 
-    let mut config = config::load_from_file(&config_file.to_str().unwrap());
+    let mut config = config::load_from_file(config_file);
 
     let mut stdout = io::stdout();
 
