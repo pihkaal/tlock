@@ -7,7 +7,7 @@ use std::{
 };
 
 use chrono::Local;
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use config::{write_default_config, Config};
 use crossterm::{
     cursor,
@@ -16,14 +16,18 @@ use crossterm::{
     style::{self, Attribute, Color},
     terminal::{self, ClearType},
 };
+use debug::print_debug_infos;
 use dirs::config_dir;
 
+mod color;
 mod config;
+mod debug;
 mod symbols;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
-struct Args {
+#[command(propagate_version = true)]
+struct Cli {
     #[arg(short, long, value_name = "FILE")]
     config: Option<String>,
 
@@ -32,14 +36,28 @@ struct Args {
 
     #[arg(short, long, action)]
     yes: bool,
+
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand, Debug)]
+enum Commands {
+    Debug {},
 }
 
 fn main() -> io::Result<()> {
-    let args = Args::parse();
+    let cli = Cli::parse();
+
+    match &cli.command {
+        Commands::Debug {} => {
+            debug::enable_debug_mode();
+        }
+    }
 
     // Load config
     let mut default_generated = false;
-    let config_file = if let Some(custom_config) = args.config {
+    let config_file = if let Some(custom_config) = cli.config {
         PathBuf::from(custom_config)
     } else {
         let config_file = config_dir().unwrap().join("tlock").join("config");
@@ -51,8 +69,8 @@ fn main() -> io::Result<()> {
         config_file
     };
 
-    if args.regenerate_default {
-        if !default_generated && config_file.exists() && !args.yes {
+    if cli.regenerate_default {
+        if !default_generated && config_file.exists() && !cli.yes {
             println!("A config file is already located at {:?}", config_file);
             print!("Do you really want to recreate it ? [y/N] ");
 
@@ -78,8 +96,14 @@ fn main() -> io::Result<()> {
     }
 
     let mut config = config::load_from_file(config_file);
-
     let mut stdout = io::stdout();
+
+    match &cli.command {
+        Commands::Debug {} => {
+            print_debug_infos(&mut config)?;
+            return Ok(());
+        }
+    }
 
     // Switch to alternate screen, hide the cursor and enable raw mode
     execute!(stdout, terminal::EnterAlternateScreen, cursor::Hide)?;
