@@ -175,6 +175,10 @@ fn main() -> io::Result<()> {
     let _ = terminal::disable_raw_mode().unwrap();
     execute!(stdout, terminal::LeaveAlternateScreen, cursor::Show)?;
 
+    if get_app_mode() == AppMode::Chrono {
+        println!("Elapsed time: {:?}", start_time.elapsed());
+    }
+
     // Be polite
     if config.be_polite {
         println!("CTRL-C pressed, bye!\n");
