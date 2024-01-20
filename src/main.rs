@@ -38,7 +38,7 @@ struct Cli {
     yes: bool,
 
     #[command(subcommand)]
-    command: Commands,
+    command: Option<Commands>,
 }
 
 #[derive(Subcommand, Debug)]
@@ -50,9 +50,10 @@ fn main() -> io::Result<()> {
     let cli = Cli::parse();
 
     match &cli.command {
-        Commands::Debug {} => {
+        Some(Commands::Debug {}) => {
             debug::enable_debug_mode();
         }
+        _ => {}
     }
 
     // Load config
@@ -99,10 +100,11 @@ fn main() -> io::Result<()> {
     let mut stdout = io::stdout();
 
     match &cli.command {
-        Commands::Debug {} => {
+        Some(Commands::Debug {}) => {
             print_debug_infos(&mut config)?;
             return Ok(());
         }
+        _ => {}
     }
 
     // Switch to alternate screen, hide the cursor and enable raw mode
