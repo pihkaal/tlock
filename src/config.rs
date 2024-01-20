@@ -6,7 +6,7 @@ use ini::configparser::ini::Ini;
 
 use crate::{
     color::{generate_gradient, parse_hex_color, ComputableColor},
-    debug,
+    debug, get_app_mode, AppMode,
 };
 
 pub struct Config {
@@ -107,7 +107,9 @@ fn load_gradient(ini: &Ini) -> ComputableColor {
         i += 1;
     }
 
-    if !debug::is_debug() && ini.getbool("gradient", "gradient_loop").unwrap().unwrap() {
+    if get_app_mode() != AppMode::Debug
+        && ini.getbool("gradient", "gradient_loop").unwrap().unwrap()
+    {
         let mut loop_keys = keys.clone();
         loop_keys.reverse();
         for i in 1..loop_keys.len() {
@@ -115,7 +117,7 @@ fn load_gradient(ini: &Ini) -> ComputableColor {
         }
     }
 
-    let steps: usize = if debug::is_debug() {
+    let steps: usize = if get_app_mode() == AppMode::Debug {
         debug::DEBUG_COLOR_DISPLAY_SIZE * 2
     } else {
         ini.getuint("gradient", "gradient_steps")

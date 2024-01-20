@@ -2,10 +2,12 @@ use core::panic;
 use std::{
     io::{self, Write},
     path::PathBuf,
+    sync::atomic::Ordering,
     thread,
     time::Duration,
 };
 
+use atomic_enum::atomic_enum;
 use chrono::Local;
 use clap::{Parser, Subcommand};
 use config::{write_default_config, Config};
@@ -46,12 +48,29 @@ enum Commands {
     Debug {},
 }
 
+#[atomic_enum]
+#[derive(PartialEq)]
+pub enum AppMode {
+    Clock = 0,
+    Debug,
+}
+
+static APP_MODE: AtomicAppMode = AtomicAppMode::new(AppMode::Debug);
+
+pub fn get_app_mode() -> AppMode {
+    return APP_MODE.load(Ordering::Relaxed);
+}
+
+pub fn set_app_mode(mode: AppMode) {
+    return APP_MODE.store(mode, Ordering::Relaxed);
+}
+
 fn main() -> io::Result<()> {
     let cli = Cli::parse();
 
     match &cli.command {
         Some(Commands::Debug {}) => {
-            debug::enable_debug_mode();
+            set_app_mode(AppMode::Debug);
         }
         _ => {}
     }

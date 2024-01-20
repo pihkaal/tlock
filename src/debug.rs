@@ -1,7 +1,4 @@
-use std::{
-    io::{self, Write},
-    sync::atomic::{AtomicBool, Ordering},
-};
+use std::io::{self, Write};
 
 use clap::crate_version;
 use crossterm::{
@@ -12,8 +9,6 @@ use crossterm::{
 use crate::config::Config;
 
 pub const DEBUG_COLOR_DISPLAY_SIZE: usize = 50;
-
-static DEBUG_MODE: AtomicBool = AtomicBool::new(false);
 
 pub fn print_debug_infos(config: &mut Config) -> io::Result<()> {
     let mut stdout = io::stdout();
@@ -61,12 +56,4 @@ fn print_debug_label(key: &str) -> io::Result<()> {
     queue!(stdout, style::ResetColor)?;
 
     return Ok(());
-}
-
-pub fn enable_debug_mode() -> () {
-    DEBUG_MODE.store(true, Ordering::Relaxed);
-}
-
-pub fn is_debug() -> bool {
-    return DEBUG_MODE.load(Ordering::Relaxed);
 }
