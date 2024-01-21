@@ -2,7 +2,7 @@ use std::{
     cmp::min,
     io::{self, Write},
     thread,
-    time::{self, Duration},
+    time::{Duration, Instant},
 };
 
 use crossterm::{
@@ -18,16 +18,52 @@ use crate::{
 };
 
 struct Lapse {
-    pub time: time::Duration,
-    pub delta: time::Duration,
+    pub time: Duration,
+    pub delta: Duration,
+}
+
+struct Chronometer {
+    start_time: Option<Instant>,
+    paused_duration: Duration,
+}
+
+impl Chronometer {
+    fn new() -> Self {
+        Chronometer {
+            start_time: None,
+            paused_duration: Duration::from_secs(0),
+        }
+    }
+
+    fn start(&mut self) {
+        self.start_time = Some(Instant::now());
+    }
+
+    fn toggle_pause(&mut self) {
+        if let Some(start_time) = self.start_time {
+            self.paused_duration += Instant::now().duration_since(start_time);
+            self.start_time = None;
+        } else {
+            self.start_time = Some(Instant::now());
+        }
+    }
+
+    fn elapsed(&self) -> Duration {
+        if let Some(start_time) = self.start_time {
+            Instant::now().duration_since(start_time) + self.paused_duration
+        } else {
+            self.paused_duration
+        }
+    }
 }
 
 pub fn main_loop(config: &mut Config) -> io::Result<()> {
     let mut stdout = io::stdout();
 
-    let start_time = time::Instant::now();
-    let mut lapses: Vec<Lapse> = vec![];
+    let mut chronometer = Chronometer::new();
+    chronometer.start();
 
+    let mut lapses: Vec<Lapse> = vec![];
     let mut scroll_offset: usize = 0;
 
     let mut quit = false;
@@ -42,11 +78,15 @@ pub fn main_loop(config: &mut Config) -> io::Result<()> {
                             quit = true;
                         }
                     }
-                    // Handle lapse
+                    // Handle pause
                     KeyCode::Char(' ') => {
-                        let time = start_time.elapsed();
+                        chronometer.toggle_pause();
+                    }
+                    // Handle lapses
+                    KeyCode::Char('l') => {
+                        let time = chronometer.elapsed();
                         let delta = if let Some(last_lap) = lapses.last() {
-                            time::Duration::from_secs(time.as_secs() - last_lap.time.as_secs())
+                            Duration::from_secs(time.as_secs() - last_lap.time.as_secs())
                         } else {
                             time
                         };
@@ -82,7 +122,7 @@ pub fn main_loop(config: &mut Config) -> io::Result<()> {
         queue!(stdout, terminal::Clear(ClearType::All))?;
 
         // Render
-        render_frame(&config, start_time, &lapses, &mut scroll_offset)?;
+        render_frame(&config, chronometer.elapsed(), &lapses, &mut scroll_offset)?;
 
         config.color.update();
 
@@ -96,14 +136,14 @@ pub fn main_loop(config: &mut Config) -> io::Result<()> {
 
 fn render_frame(
     config: &Config,
-    start_time: time::Instant,
+    time: Duration,
     lapses: &Vec<Lapse>,
     scroll_offset: &mut usize,
 ) -> io::Result<()> {
     let color = config.color.get_value();
 
     // Display time
-    let elapsed = utils::format_duration(start_time.elapsed());
+    let elapsed = utils::format_duration(time);
     rendering::draw_time(&elapsed, color)?;
 
     // Display lapses
