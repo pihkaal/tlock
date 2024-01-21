@@ -39,6 +39,11 @@ impl Chronometer {
         self.start_time = Some(Instant::now());
     }
 
+    fn reset(&mut self) {
+        self.start_time = None;
+        self.paused_duration = Duration::from_secs(0);
+    }
+
     fn toggle_pause(&mut self) {
         if let Some(start_time) = self.start_time {
             self.paused_duration += Instant::now().duration_since(start_time);
@@ -81,6 +86,12 @@ pub fn main_loop(config: &mut Config) -> io::Result<()> {
                     // Handle pause
                     KeyCode::Char(' ') => {
                         chronometer.toggle_pause();
+                    }
+                    // Handle reset
+                    KeyCode::Char('r') => {
+                        chronometer.reset();
+                        lapses.clear();
+                        scroll_offset = 0;
                     }
                     // Handle lapses
                     KeyCode::Char('l') => {
