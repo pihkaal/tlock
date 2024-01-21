@@ -1,5 +1,6 @@
 use core::panic;
 use std::{
+    cmp::min,
     io::{self, Write},
     path::PathBuf,
     sync::atomic::Ordering,
@@ -65,6 +66,11 @@ pub fn get_app_mode() -> AppMode {
 
 pub fn set_app_mode(mode: AppMode) {
     return APP_MODE.store(mode, Ordering::Relaxed);
+}
+
+struct Lapse {
+    pub time: time::Duration,
+    pub delta: time::Duration,
 }
 
 fn main() -> io::Result<()> {
@@ -133,7 +139,9 @@ fn main() -> io::Result<()> {
     execute!(stdout, terminal::EnterAlternateScreen, cursor::Hide)?;
     let _ = terminal::enable_raw_mode()?;
 
+    // For the chronometer
     let start_time = time::Instant::now();
+    let mut lapses: Vec<Lapse> = vec![];
 
     // Main loop
     let mut quit = false;
@@ -142,10 +150,23 @@ fn main() -> io::Result<()> {
         while event::poll(Duration::ZERO)? {
             match event::read()? {
                 Event::Key(e) => match e.code {
-                    KeyCode::Char(x) => {
-                        // Handle CTRL-C
-                        if x == 'c' && e.modifiers.contains(KeyModifiers::CONTROL) {
+                    // Handle CTRL-C
+                    KeyCode::Char('c') => {
+                        if e.modifiers.contains(KeyModifiers::CONTROL) {
                             quit = true;
+                        }
+                    }
+                    // Handle lapse
+                    KeyCode::Char(' ') => {
+                        if get_app_mode() == AppMode::Chrono {
+                            let time = start_time.elapsed();
+                            let delta = if let Some(last_lap) = lapses.last() {
+                                time::Duration::from_secs(time.as_secs() - last_lap.time.as_secs())
+                            } else {
+                                time
+                            };
+
+                            lapses.push(Lapse { time, delta });
                         }
                     }
                     _ => {}
@@ -160,7 +181,7 @@ fn main() -> io::Result<()> {
         // Render
         match get_app_mode() {
             AppMode::Clock => render_clock(&config)?,
-            AppMode::Chrono => render_chrono(&config, &start_time)?,
+            AppMode::Chrono => render_chrono(&config, start_time, &lapses)?,
             AppMode::Debug => unreachable!(),
         };
 
@@ -174,10 +195,6 @@ fn main() -> io::Result<()> {
     // Disale raw mode, leave the alternate screen and show the cursor back
     let _ = terminal::disable_raw_mode().unwrap();
     execute!(stdout, terminal::LeaveAlternateScreen, cursor::Show)?;
-
-    if get_app_mode() == AppMode::Chrono {
-        println!("Elapsed time: {:?}", start_time.elapsed());
-    }
 
     // Be polite
     if config.be_polite {
@@ -201,22 +218,39 @@ fn render_clock(config: &Config) -> io::Result<()> {
         .date_naive()
         .format(&config.date_format.to_owned())
         .to_string();
-    draw_date(&date, color)?;
+
+    let (width, height) = terminal::size()?;
+    let x = width / 2 - (date.len() as u16) / 2;
+    let y = height / 2 + symbols::SYMBOL_HEIGHT as u16 / 2 + 2;
+    draw_text(&date, x, y, color)?;
 
     return Ok(());
 }
 
-fn render_chrono(config: &Config, start_time: &time::Instant) -> io::Result<()> {
+fn render_chrono(
+    config: &Config,
+    start_time: time::Instant,
+    lapses: &Vec<Lapse>,
+) -> io::Result<()> {
     let color = config.color.get_value();
 
     // Display time
-    let seconds = start_time.elapsed().as_secs();
-    let hours = seconds / 3600;
-    let minutes = (seconds % 3600) / 60;
-    let seconds = seconds % 60;
-
-    let elapsed = format!("{:02}:{:02}:{:02}", hours, minutes, seconds);
+    let elapsed = format_duration(start_time.elapsed());
     draw_time(&elapsed, color)?;
+
+    // Display lapses
+    let (width, height) = terminal::size()?;
+    let y = height / 2 + symbols::SYMBOL_HEIGHT as u16 / 2 + 2;
+    let max_items = min(10, height - y) as usize;
+
+    for (i, lapse) in lapses.iter().rev().take(max_items).enumerate() {
+        let delta = format_duration(lapse.delta);
+        let time = format_duration(lapse.time);
+
+        let lapse = format!("#0{}  --  +{}  --  {}", lapses.len() - i, delta, time);
+        let x = width / 2 - (lapse.len() as u16) / 2;
+        draw_text(&lapse, x, y + i as u16, color)?;
+    }
 
     return Ok(());
 }
@@ -289,13 +323,8 @@ fn draw_time_symbol(symbol: char, x: u16, y: u16, color: Color) -> io::Result<()
     return Ok(());
 }
 
-fn draw_date(date: &str, color: Color) -> io::Result<()> {
+fn draw_text(string: &str, x: u16, y: u16, color: Color) -> io::Result<()> {
     let mut stdout = io::stdout();
-
-    let (width, height) = terminal::size()?;
-
-    let x = width / 2 - (date.len() as u16) / 2;
-    let y = height / 2 + symbols::SYMBOL_HEIGHT as u16 / 2 + 2;
 
     queue!(
         stdout,
@@ -303,7 +332,16 @@ fn draw_date(date: &str, color: Color) -> io::Result<()> {
         style::SetForegroundColor(color),
         style::SetAttribute(Attribute::Bold)
     )?;
-    write!(stdout, "{}", date)?;
+    write!(stdout, "{}", string)?;
 
     return Ok(());
+}
+
+fn format_duration(duration: time::Duration) -> String {
+    let seconds = duration.as_secs();
+    let hours = seconds / 3600;
+    let minutes = (seconds % 3600) / 60;
+    let seconds = seconds % 60;
+
+    return format!("{:02}:{:02}:{:02}", hours, minutes, seconds);
 }
