@@ -37,9 +37,9 @@ struct Cli {
 enum Commands {
     Debug {},
     Chrono {},
-    Countdown {
+    Timer {
         #[arg(required = true)]
-        start: Vec<String>,
+        duration: Vec<String>,
     },
 }
 
@@ -104,9 +104,9 @@ fn main() -> io::Result<()> {
 
     match &cli.command {
         Some(Commands::Chrono {}) => modes::chrono::main_loop(&mut config)?,
-        Some(Commands::Countdown { start }) => {
-            let start = start.join(" ");
-            modes::countdown::main_loop(&mut config, &start)?
+        Some(Commands::Timer { duration }) => {
+            let duration = duration.join(" ");
+            modes::timer::main_loop(&mut config, &duration)?
         }
         Some(Commands::Debug {}) => unreachable!(),
         None => modes::clock::main_loop(&mut config)?,

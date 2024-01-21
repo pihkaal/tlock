@@ -16,16 +16,16 @@ use crate::{
     rendering::{self, symbols},
 };
 
-struct Countdown {
+struct Timer {
     duration: Duration,
     end_time: Option<Instant>,
     paused_duration: Duration,
 }
 
-impl Countdown {
+impl Timer {
     fn new(duration: Duration) -> Self {
         let end_time = Some(Instant::now() + duration + Duration::from_secs(1));
-        Countdown {
+        Timer {
             duration,
             end_time,
             paused_duration: Duration::ZERO,
@@ -71,11 +71,11 @@ impl Countdown {
     }
 }
 
-pub fn main_loop(config: &mut Config, start: &str) -> io::Result<()> {
+pub fn main_loop(config: &mut Config, duration: &str) -> io::Result<()> {
     let mut stdout = io::stdout();
 
-    let duration = parse_duration::parse(start).unwrap();
-    let mut countdown = Countdown::new(duration);
+    let duration = parse_duration::parse(duration).unwrap();
+    let mut timer = Timer::new(duration);
 
     let mut quit = false;
     while !quit {
@@ -91,11 +91,11 @@ pub fn main_loop(config: &mut Config, start: &str) -> io::Result<()> {
                     }
                     // Handle pause
                     KeyCode::Char(' ') => {
-                        countdown.toggle_pause();
+                        timer.toggle_pause();
                     }
                     // Handle reset
                     KeyCode::Char('r') => {
-                        countdown.reset();
+                        timer.reset();
                     }
                     _ => {}
                 },
@@ -107,7 +107,7 @@ pub fn main_loop(config: &mut Config, start: &str) -> io::Result<()> {
         queue!(stdout, terminal::Clear(ClearType::All))?;
 
         // Render
-        render_frame(&config, &countdown)?;
+        render_frame(&config, &timer)?;
 
         config.color.update();
 
@@ -119,17 +119,17 @@ pub fn main_loop(config: &mut Config, start: &str) -> io::Result<()> {
     return Ok(());
 }
 
-fn render_frame(config: &Config, countdown: &Countdown) -> io::Result<()> {
+fn render_frame(config: &Config, timer: &Timer) -> io::Result<()> {
     let color = config.color.get_value();
 
     // Display time
-    let remaining = utils::format_duration(countdown.time_left());
+    let remaining = utils::format_duration(timer.time_left());
     rendering::draw_time(&remaining, color)?;
 
     // Display pause state
     let (width, height) = terminal::size()?;
     let y = height / 2 + symbols::SYMBOL_HEIGHT as u16 / 2 + 2;
-    if countdown.is_paused() {
+    if timer.is_paused() {
         let text = "[PAUSE]";
         let x = width / 2 - (text.len() as u16) / 2;
 
@@ -141,7 +141,7 @@ fn render_frame(config: &Config, countdown: &Countdown) -> io::Result<()> {
         )?;
     }
     // Display finish state
-    else if countdown.is_finished() {
+    else if timer.is_finished() {
         let text = "[FINISHED]";
         let x = width / 2 - (text.len() as u16) / 2;
 
