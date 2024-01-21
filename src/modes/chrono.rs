@@ -53,6 +53,10 @@ impl Chronometer {
         }
     }
 
+    fn is_paused(&self) -> bool {
+        return self.start_time.is_none();
+    }
+
     fn elapsed(&self) -> Duration {
         if let Some(start_time) = self.start_time {
             Instant::now().duration_since(start_time) + self.paused_duration
@@ -133,7 +137,7 @@ pub fn main_loop(config: &mut Config) -> io::Result<()> {
         queue!(stdout, terminal::Clear(ClearType::All))?;
 
         // Render
-        render_frame(&config, chronometer.elapsed(), &lapses, &mut scroll_offset)?;
+        render_frame(&config, &chronometer, &lapses, &mut scroll_offset)?;
 
         config.color.update();
 
@@ -147,14 +151,14 @@ pub fn main_loop(config: &mut Config) -> io::Result<()> {
 
 fn render_frame(
     config: &Config,
-    time: Duration,
+    chronometer: &Chronometer,
     lapses: &Vec<Lapse>,
     scroll_offset: &mut usize,
 ) -> io::Result<()> {
     let color = config.color.get_value();
 
     // Display time
-    let elapsed = utils::format_duration(time);
+    let elapsed = utils::format_duration(chronometer.elapsed());
     rendering::draw_time(&elapsed, color)?;
 
     // Display lapses
@@ -164,9 +168,7 @@ fn render_frame(
 
     if lapses.len() <= max_items {
         *scroll_offset = 0;
-    }
-
-    if lapses.len() > max_items && *scroll_offset > lapses.len() - max_items {
+    } else if *scroll_offset > lapses.len() - max_items {
         *scroll_offset = lapses.len() - max_items;
     }
 
@@ -188,6 +190,18 @@ fn render_frame(
         );
         let x = width / 2 - (lapse.len() as u16) / 2;
         rendering::draw_text(&lapse, x, y + i as u16, color)?;
+    }
+
+    // Display pause state
+    if chronometer.is_paused() {
+        let text = "[PAUSE]";
+        let x = width / 2 - (text.len() as u16) / 2;
+        rendering::draw_text(
+            text,
+            x,
+            y - symbols::SYMBOL_HEIGHT as u16 - symbols::SYMBOL_HEIGHT as u16 / 2,
+            color,
+        )?;
     }
 
     return Ok(());
