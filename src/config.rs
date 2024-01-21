@@ -5,10 +5,8 @@ use crossterm::style::Color;
 use ini::configparser::ini::Ini;
 
 use crate::{
-    get_app_mode,
     modes::debug,
     rendering::color::{generate_gradient, parse_hex_color, ComputableColor},
-    AppMode,
 };
 
 pub struct Config {
@@ -21,14 +19,14 @@ pub struct Config {
 
 const DEFAULT_CONFIG: &str = include_str!("default_config");
 
-pub fn load_from_file(path: PathBuf) -> Config {
+pub fn load_from_file(path: PathBuf, debug_mode: bool) -> Config {
     let mut ini = Ini::new();
     ini.load(&path.to_str().unwrap()).unwrap();
 
     let config = Config {
         be_polite: ini.getbool("general", "polite").unwrap().unwrap(),
         fps: ini.getuint("general", "fps").unwrap().unwrap(),
-        color: load_color(&ini),
+        color: load_color(&ini, debug_mode),
         time_format: ini.get("format", "time").unwrap(),
         date_format: ini.get("format", "date").unwrap(),
     };
@@ -42,7 +40,7 @@ pub fn write_default_config(path: PathBuf) -> () {
     let _ = fs::write(path, DEFAULT_CONFIG);
 }
 
-fn load_color(ini: &Ini) -> ComputableColor {
+fn load_color(ini: &Ini, debug_mode: bool) -> ComputableColor {
     let color_mode = ini.get("styling", "color_mode").unwrap();
 
     match color_mode.as_str() {
@@ -59,7 +57,7 @@ fn load_color(ini: &Ini) -> ComputableColor {
             return ComputableColor::from(load_ansi_color(color));
         }
         "gradient" => {
-            return load_gradient(ini);
+            return load_gradient(ini, debug_mode);
         }
         _ => panic!("ERROR: Invalid color mode: {}", color_mode),
     }
@@ -100,7 +98,7 @@ fn load_ansi_color(value: i64) -> Color {
     return Color::AnsiValue(value.try_into().unwrap());
 }
 
-fn load_gradient(ini: &Ini) -> ComputableColor {
+fn load_gradient(ini: &Ini, debug_mode: bool) -> ComputableColor {
     let mut keys = Vec::new();
 
     let mut i = 0;
@@ -109,9 +107,7 @@ fn load_gradient(ini: &Ini) -> ComputableColor {
         i += 1;
     }
 
-    if get_app_mode() != AppMode::Debug
-        && ini.getbool("gradient", "gradient_loop").unwrap().unwrap()
-    {
+    if !debug_mode && ini.getbool("gradient", "gradient_loop").unwrap().unwrap() {
         let mut loop_keys = keys.clone();
         loop_keys.reverse();
         for i in 1..loop_keys.len() {
@@ -119,7 +115,7 @@ fn load_gradient(ini: &Ini) -> ComputableColor {
         }
     }
 
-    let steps: usize = if get_app_mode() == AppMode::Debug {
+    let steps: usize = if debug_mode {
         debug::DEBUG_COLOR_DISPLAY_SIZE * 2
     } else {
         ini.getuint("gradient", "gradient_steps")

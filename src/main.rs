@@ -2,10 +2,8 @@ use core::panic;
 use std::{
     io::{self, Write},
     path::PathBuf,
-    sync::atomic::Ordering,
 };
 
-use atomic_enum::atomic_enum;
 use clap::{Parser, Subcommand};
 use config::write_default_config;
 use crossterm::{cursor, execute, terminal};
@@ -39,36 +37,14 @@ struct Cli {
 enum Commands {
     Debug {},
     Chrono {},
-}
-
-#[atomic_enum]
-#[derive(PartialEq)]
-pub enum AppMode {
-    Clock = 0,
-    Debug,
-    Chrono,
-}
-
-static APP_MODE: AtomicAppMode = AtomicAppMode::new(AppMode::Debug);
-
-pub fn get_app_mode() -> AppMode {
-    return APP_MODE.load(Ordering::Relaxed);
-}
-
-pub fn set_app_mode(mode: AppMode) {
-    return APP_MODE.store(mode, Ordering::Relaxed);
+    Countdown {
+        #[arg(required = true)]
+        start: Vec<String>,
+    },
 }
 
 fn main() -> io::Result<()> {
     let cli = Cli::parse();
-
-    match &cli.command {
-        Some(Commands::Debug {}) => {
-            set_app_mode(AppMode::Debug);
-        }
-        Some(Commands::Chrono {}) => set_app_mode(AppMode::Chrono),
-        _ => set_app_mode(AppMode::Clock),
-    }
 
     // Load config
     let mut default_generated = false;
@@ -110,26 +86,31 @@ fn main() -> io::Result<()> {
         panic!("ERROR: Configuration file not found");
     }
 
-    let mut config = config::load_from_file(config_file);
+    let debug_mode = match &cli.command {
+        Some(Commands::Debug {}) => true,
+        _ => false,
+    };
+    let mut config = config::load_from_file(config_file, debug_mode);
     let mut stdout = io::stdout();
 
-    match get_app_mode() {
-        AppMode::Debug => {
-            debug::print_debug_infos(&mut config)?;
-            return Ok(());
-        }
-        _ => {}
+    if debug_mode {
+        debug::print_debug_infos(&mut config)?;
+        return Ok(());
     }
 
     // Switch to alternate screen, hide the cursor and enable raw mode
     execute!(stdout, terminal::EnterAlternateScreen, cursor::Hide)?;
     let _ = terminal::enable_raw_mode()?;
 
-    match get_app_mode() {
-        AppMode::Clock => modes::clock::main_loop(&mut config)?,
-        AppMode::Chrono => modes::chrono::main_loop(&mut config)?,
-        AppMode::Debug => unreachable!(),
-    };
+    match &cli.command {
+        Some(Commands::Chrono {}) => modes::chrono::main_loop(&mut config)?,
+        Some(Commands::Countdown { start }) => {
+            let start = start.join(" ");
+            modes::countdown::main_loop(&mut config, &start)?
+        }
+        Some(Commands::Debug {}) => unreachable!(),
+        None => modes::clock::main_loop(&mut config)?,
+    }
 
     // Disale raw mode, leave the alternate screen and show the cursor back
     let _ = terminal::disable_raw_mode().unwrap();
