@@ -5,8 +5,10 @@ use crossterm::style::Color;
 use ini::configparser::ini::Ini;
 
 use crate::{
-    color::{generate_gradient, parse_hex_color, ComputableColor},
-    debug, get_app_mode, AppMode,
+    get_app_mode,
+    modes::debug,
+    rendering::color::{generate_gradient, parse_hex_color, ComputableColor},
+    AppMode,
 };
 
 pub struct Config {
