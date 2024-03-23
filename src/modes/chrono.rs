@@ -195,13 +195,10 @@ fn render_frame(
     // Display pause state
     if chronometer.is_paused() {
         let text = "[PAUSE]";
-        let x = width / 2 - (text.len() as i16) / 2;
-        rendering::draw_text(
-            text,
-            x,
-            y - symbols::SYMBOL_HEIGHT as i16 - symbols::SYMBOL_HEIGHT as i16 / 2,
-            color,
-        )?;
+        let x = width / 2 - (text.len() as i16) / 2 - 1;
+        let y = y - symbols::SYMBOL_HEIGHT as i16 + symbols::SYMBOL_HEIGHT as i16 / 2 + 1;
+
+        rendering::draw_text(text, x, y, color)?;
     }
 
     return Ok(());
