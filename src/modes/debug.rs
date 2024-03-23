@@ -50,7 +50,8 @@ pub fn print_debug_infos(config: &mut Config) -> io::Result<()> {
     writeln!(stdout)?;
     queue!(stdout, style::ResetColor)?;
     let _ = stdout.flush();
-    return Ok(());
+
+    Ok(())
 }
 
 fn print_debug_label(key: &str) -> io::Result<()> {
@@ -60,5 +61,5 @@ fn print_debug_label(key: &str) -> io::Result<()> {
     write!(stdout, "{}: ", key)?;
     queue!(stdout, style::ResetColor)?;
 
-    return Ok(());
+    Ok(())
 }

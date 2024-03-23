@@ -54,7 +54,7 @@ impl Chronometer {
     }
 
     fn is_paused(&self) -> bool {
-        return self.start_time.is_none();
+        self.start_time.is_none()
     }
 
     fn elapsed(&self) -> Duration {
@@ -146,7 +146,7 @@ pub fn main_loop(config: &mut Config) -> io::Result<()> {
         thread::sleep(Duration::from_millis(1000 / config.fps));
     }
 
-    return Ok(());
+    Ok(())
 }
 
 fn render_frame(
@@ -202,5 +202,5 @@ fn render_frame(
         rendering::draw_text(text, x, y, color)?;
     }
 
-    return Ok(());
+    Ok(())
 }

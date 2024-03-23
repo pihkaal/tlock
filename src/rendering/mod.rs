@@ -40,7 +40,7 @@ pub fn draw_time(time: &str, color: Color) -> io::Result<()> {
         }
     }
 
-    return Ok(());
+    Ok(())
 }
 
 pub fn draw_text(mut string: &str, mut x: i16, y: i16, color: Color) -> io::Result<()> {
@@ -63,7 +63,8 @@ pub fn draw_text(mut string: &str, mut x: i16, y: i16, color: Color) -> io::Resu
         style::SetAttribute(Attribute::Bold)
     )?;
     write!(stdout, "{}", string)?;
-    return Ok(());
+
+    Ok(())
 }
 
 fn draw_time_width(time: &str) -> i16 {
@@ -113,5 +114,5 @@ fn draw_time_symbol(symbol: char, x: i16, y: i16, color: Color) -> io::Result<()
         }
     }
 
-    return Ok(());
+    Ok(())
 }

@@ -23,15 +23,13 @@ pub fn load_from_file(path: PathBuf, debug_mode: bool) -> Config {
     let mut ini = Ini::new();
     ini.load(&path.to_str().unwrap()).unwrap();
 
-    let config = Config {
+    Config {
         be_polite: ini.getbool("general", "polite").unwrap().unwrap(),
         fps: ini.getuint("general", "fps").unwrap().unwrap(),
         color: load_color(&ini, debug_mode),
         time_format: ini.get("format", "time").unwrap(),
         date_format: ini.get("format", "date").unwrap(),
-    };
-
-    return config;
+    }
 }
 
 pub fn write_default_config(path: PathBuf) -> () {
@@ -47,19 +45,17 @@ fn load_color(ini: &Ini, debug_mode: bool) -> ComputableColor {
     match color_mode.as_str() {
         "term" => {
             let color = ini.getint("styling", "color_term").unwrap().unwrap();
-            return ComputableColor::from(load_term_color(color));
+            ComputableColor::from(load_term_color(color))
         }
         "hex" => {
             let color = ini.get("styling", "color_hex").unwrap();
-            return ComputableColor::from(load_hex_color(&color));
+            ComputableColor::from(load_hex_color(&color))
         }
         "ansi" => {
             let color = ini.getint("styling", "color_ansi").unwrap().unwrap();
-            return ComputableColor::from(load_ansi_color(color));
+            ComputableColor::from(load_ansi_color(color))
         }
-        "gradient" => {
-            return load_gradient(ini, debug_mode);
-        }
+        "gradient" => load_gradient(ini, debug_mode),
         _ => panic!("ERROR: Invalid color mode: {}", color_mode),
     }
 }
@@ -88,15 +84,15 @@ fn load_term_color(value: i64) -> Color {
 
 fn load_hex_color(value: &str) -> Color {
     let rgb = parse_hex_color(value);
-    return Color::Rgb {
+    Color::Rgb {
         r: rgb.0,
         g: rgb.1,
         b: rgb.2,
-    };
+    }
 }
 
 fn load_ansi_color(value: i64) -> Color {
-    return Color::AnsiValue(value.try_into().unwrap());
+    Color::AnsiValue(value.try_into().unwrap())
 }
 
 fn load_gradient(ini: &Ini, debug_mode: bool) -> ComputableColor {
@@ -131,5 +127,5 @@ fn load_gradient(ini: &Ini, debug_mode: bool) -> ComputableColor {
             .try_into()
             .unwrap()
     };
-    return generate_gradient(keys, steps - 1);
+    generate_gradient(keys, steps - 1)
 }

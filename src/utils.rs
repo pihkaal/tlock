@@ -6,5 +6,5 @@ pub fn format_duration(duration: time::Duration) -> String {
     let minutes = (seconds % 3600) / 60;
     let seconds = seconds % 60;
 
-    return format!("{:02}:{:02}:{:02}", hours, minutes, seconds);
+    format!("{:02}:{:02}:{:02}", hours, minutes, seconds)
 }

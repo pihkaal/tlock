@@ -61,7 +61,7 @@ impl Timer {
     }
 
     fn is_paused(&self) -> bool {
-        return self.end_time.is_none();
+        self.end_time.is_none()
     }
 
     fn reset(&mut self) {
@@ -116,7 +116,7 @@ pub fn main_loop(config: &mut Config, duration: &str) -> io::Result<()> {
         thread::sleep(Duration::from_millis(1000 / config.fps));
     }
 
-    return Ok(());
+    Ok(())
 }
 
 fn render_frame(config: &Config, timer: &Timer) -> io::Result<()> {
@@ -146,5 +146,5 @@ fn render_frame(config: &Config, timer: &Timer) -> io::Result<()> {
         rendering::draw_text(text, x, y, color)?;
     }
 
-    return Ok(());
+    Ok(())
 }

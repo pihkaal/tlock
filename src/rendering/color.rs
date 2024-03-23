@@ -7,10 +7,10 @@ pub struct ComputableColor {
 
 impl ComputableColor {
     pub fn from(color: Color) -> ComputableColor {
-        return ComputableColor {
+        ComputableColor {
             values: vec![color],
             current: 0,
-        };
+        }
     }
 
     pub fn update(&mut self) -> () {
@@ -18,27 +18,26 @@ impl ComputableColor {
     }
 
     pub fn get_value(&self) -> Color {
-        return *self.values.get(self.current).unwrap();
+        *self.values.get(self.current).unwrap()
     }
 
     pub fn get_keys_count(&self) -> usize {
-        return self.values.len();
+        self.values.len()
     }
 }
 
 fn clamp01(v: f32) -> f32 {
-    return if v < 0.0 {
+    if v < 0.0 {
         0.0
     } else if v > 1.0 {
         1.0
     } else {
         v
-    };
+    }
 }
 
 fn lerp(a: u8, b: u8, t: f32) -> u8 {
-    let v = a as f32 + (b as f32 - a as f32) as f32 * clamp01(t);
-    return v as u8;
+    (a as f32 + (b as f32 - a as f32) as f32 * clamp01(t)) as u8
 }
 
 pub fn generate_gradient(keys: Vec<(u8, u8, u8)>, steps: usize) -> ComputableColor {
@@ -61,10 +60,10 @@ pub fn generate_gradient(keys: Vec<(u8, u8, u8)>, steps: usize) -> ComputableCol
         }
     }
 
-    return ComputableColor {
+    ComputableColor {
         values: gradient,
         current: 0,
-    };
+    }
 }
 
 pub fn parse_hex_color(value: &str) -> (u8, u8, u8) {
@@ -91,5 +90,5 @@ pub fn parse_hex_color(value: &str) -> (u8, u8, u8) {
     let g = u8::from_str_radix(&value[2..4], 16).unwrap();
     let b = u8::from_str_radix(&value[4..6], 16).unwrap();
 
-    return (r, g, b);
+    (r, g, b)
 }

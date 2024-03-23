@@ -136,5 +136,5 @@ fn main() -> io::Result<()> {
         println!("CTRL-C pressed, bye!\n");
     }
 
-    return Ok(());
+    Ok(())
 }

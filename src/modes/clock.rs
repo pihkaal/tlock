@@ -50,7 +50,7 @@ pub fn main_loop(config: &mut Config) -> io::Result<()> {
         thread::sleep(Duration::from_millis(1000 / config.fps));
     }
 
-    return Ok(());
+    Ok(())
 }
 
 fn render_frame(config: &Config) -> io::Result<()> {
@@ -73,5 +73,5 @@ fn render_frame(config: &Config) -> io::Result<()> {
     let y = height / 2 + symbols::SYMBOL_HEIGHT as i16 / 2 + 2;
     rendering::draw_text(&date, x, y - 1, color)?;
 
-    return Ok(());
+    Ok(())
 }
