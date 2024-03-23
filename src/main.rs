@@ -35,8 +35,13 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Commands {
+    #[clap(alias = "d")]
     Debug {},
+
+    #[clap(alias = "c")]
     Chrono {},
+
+    #[clap(alias = "t")]
     Timer {
         #[arg(required = true)]
         duration: Vec<String>,
