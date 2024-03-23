@@ -27,10 +27,15 @@ pub fn print_debug_infos(config: &mut Config) -> io::Result<()> {
 
     print_debug_label("Color scheme")?;
     let width = config.color.get_keys_count();
+    // If width is one, it is a single color
     if width == 1 {
         queue!(stdout, style::SetBackgroundColor(config.color.get_value()))?;
         write!(stdout, "{}", " ".repeat(DEBUG_COLOR_DISPLAY_SIZE))?;
-    } else {
+    }
+    // Otherwhise, it's a gradient
+    else {
+        // Use half characters to display two colors in one character using background
+        // and foreground
         for _ in 0..width / 2 {
             queue!(stdout, style::SetForegroundColor(config.color.get_value()))?;
             config.color.update();

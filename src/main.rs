@@ -51,11 +51,12 @@ enum Commands {
 fn main() -> io::Result<()> {
     let cli = Cli::parse();
 
-    // Load config
+    // Load config from either given config file
     let mut default_generated = false;
     let config_file = if let Some(custom_config) = cli.config {
         PathBuf::from(custom_config)
     } else {
+        // Or default one, located in ~/.config/tlock
         let config_file = config_dir().unwrap().join("tlock").join("config");
         if !config_file.exists() {
             write_default_config(config_file.clone());
@@ -65,7 +66,10 @@ fn main() -> io::Result<()> {
         config_file
     };
 
+    // Regenerate default config if needed
     if cli.regenerate_default {
+        // If a config file already exists and it's not the first time the config
+        // is being generated, then ask for confirmation
         if !default_generated && config_file.exists() && !cli.yes {
             println!("A config file is already located at {:?}", config_file);
             print!("Do you really want to recreate it ? [y/N] ");
@@ -82,15 +86,19 @@ fn main() -> io::Result<()> {
             }
         }
 
+        // Otherwhise, just write default config to target path
         write_default_config(config_file.clone());
         println!("Done.");
         return Ok(());
     }
 
+    // If no config file was found, throw an error
+    // NOTE: this should never happen
     if !config_file.exists() {
         panic!("ERROR: Configuration file not found");
     }
 
+    // Enable debug mode if needed, and load config
     let debug_mode = match &cli.command {
         Some(Commands::Debug {}) => true,
         _ => false,
@@ -98,6 +106,7 @@ fn main() -> io::Result<()> {
     let mut config = config::load_from_file(config_file, debug_mode);
     let mut stdout = io::stdout();
 
+    // Print debug infos
     if debug_mode {
         debug::print_debug_infos(&mut config)?;
         return Ok(());
@@ -107,6 +116,7 @@ fn main() -> io::Result<()> {
     execute!(stdout, terminal::EnterAlternateScreen, cursor::Hide)?;
     let _ = terminal::enable_raw_mode()?;
 
+    // Start the appropriate mode
     match &cli.command {
         Some(Commands::Chrono {}) => modes::chrono::main_loop(&mut config)?,
         Some(Commands::Timer { duration }) => {

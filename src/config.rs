@@ -35,6 +35,7 @@ pub fn load_from_file(path: PathBuf, debug_mode: bool) -> Config {
 }
 
 pub fn write_default_config(path: PathBuf) -> () {
+    // Write default config file to target path
     let parent = path.parent().unwrap();
     let _ = fs::create_dir_all(parent);
     let _ = fs::write(path, DEFAULT_CONFIG);
@@ -101,12 +102,17 @@ fn load_ansi_color(value: i64) -> Color {
 fn load_gradient(ini: &Ini, debug_mode: bool) -> ComputableColor {
     let mut keys = Vec::new();
 
+    // Iterate over all gradient keys, they are defined like that in the config file:
+    //   gradient_key_1=...
+    //   gradient_key_2=...
+    //   gradient_key_N=...
     let mut i = 0;
     while let Some(key) = ini.get("gradient", &format!("gradient_key_{}", i)) {
         keys.push(parse_hex_color(&key));
         i += 1;
     }
 
+    // Generate gradient loop if needed
     if !debug_mode && ini.getbool("gradient", "gradient_loop").unwrap().unwrap() {
         let mut loop_keys = keys.clone();
         loop_keys.reverse();
@@ -115,6 +121,7 @@ fn load_gradient(ini: &Ini, debug_mode: bool) -> ComputableColor {
         }
     }
 
+    // I use half characters for debug mode rendering, so we take display size * 2
     let steps: usize = if debug_mode {
         debug::DEBUG_COLOR_DISPLAY_SIZE * 2
     } else {

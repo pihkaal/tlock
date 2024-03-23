@@ -172,6 +172,7 @@ fn render_frame(
         *scroll_offset = lapses.len() - max_items;
     }
 
+    // Iterate over lapses, skipping with scroll offset and taxing N items
     for (i, lapse) in lapses
         .iter()
         .rev()
