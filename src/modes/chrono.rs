@@ -162,8 +162,8 @@ fn render_frame(
     rendering::draw_time(&elapsed, color)?;
 
     // Display lapses
-    let (width, height) = terminal::size()?;
-    let y = height / 2 + symbols::SYMBOL_HEIGHT as u16 / 2 + 2;
+    let (width, height) = rendering::get_terminal_size()?;
+    let y = height / 2 + symbols::SYMBOL_HEIGHT as i16 / 2 + 2;
     let max_items = min(10, height - y - 1) as usize;
 
     if lapses.len() <= max_items {
@@ -188,18 +188,18 @@ fn render_frame(
             delta,
             time
         );
-        let x = width / 2 - (lapse.len() as u16) / 2;
-        rendering::draw_text(&lapse, x, y + i as u16, color)?;
+        let x = width / 2 - (lapse.len() as i16) / 2;
+        rendering::draw_text(&lapse, x, y + i as i16, color)?;
     }
 
     // Display pause state
     if chronometer.is_paused() {
         let text = "[PAUSE]";
-        let x = width / 2 - (text.len() as u16) / 2;
+        let x = width / 2 - (text.len() as i16) / 2;
         rendering::draw_text(
             text,
             x,
-            y - symbols::SYMBOL_HEIGHT as u16 - symbols::SYMBOL_HEIGHT as u16 / 2,
+            y - symbols::SYMBOL_HEIGHT as i16 - symbols::SYMBOL_HEIGHT as i16 / 2,
             color,
         )?;
     }

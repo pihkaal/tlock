@@ -68,10 +68,10 @@ fn render_frame(config: &Config) -> io::Result<()> {
         .format(&config.date_format.to_owned())
         .to_string();
 
-    let (width, height) = terminal::size()?;
-    let x = width / 2 - (date.len() as u16) / 2;
-    let y = height / 2 + symbols::SYMBOL_HEIGHT as u16 / 2 + 2;
-    rendering::draw_text(&date, x, y, color)?;
+    let (width, height) = rendering::get_terminal_size()?;
+    let x = width / 2 - (date.len() as i16) / 2;
+    let y = height / 2 + symbols::SYMBOL_HEIGHT as i16 / 2 + 2;
+    rendering::draw_text(&date, x, y - 1, color)?;
 
     return Ok(());
 }

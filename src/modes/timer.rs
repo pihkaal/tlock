@@ -127,28 +127,28 @@ fn render_frame(config: &Config, timer: &Timer) -> io::Result<()> {
     rendering::draw_time(&remaining, color)?;
 
     // Display pause state
-    let (width, height) = terminal::size()?;
-    let y = height / 2 + symbols::SYMBOL_HEIGHT as u16 / 2 + 2;
+    let (width, height) = rendering::get_terminal_size()?;
+    let y = height / 2 + symbols::SYMBOL_HEIGHT as i16 / 2 + 2;
     if timer.is_paused() {
         let text = "[PAUSE]";
-        let x = width / 2 - (text.len() as u16) / 2;
+        let x = width / 2 - (text.len() as i16) / 2;
 
         rendering::draw_text(
             text,
             x,
-            y - symbols::SYMBOL_HEIGHT as u16 - symbols::SYMBOL_HEIGHT as u16 / 2,
+            y - symbols::SYMBOL_HEIGHT as i16 - symbols::SYMBOL_HEIGHT as i16 / 2,
             color,
         )?;
     }
     // Display finish state
     else if timer.is_finished() {
         let text = "[FINISHED]";
-        let x = width / 2 - (text.len() as u16) / 2;
+        let x = width / 2 - (text.len() as i16) / 2;
 
         rendering::draw_text(
             text,
             x,
-            y - symbols::SYMBOL_HEIGHT as u16 - symbols::SYMBOL_HEIGHT as u16 / 2,
+            y - symbols::SYMBOL_HEIGHT as i16 - symbols::SYMBOL_HEIGHT as i16 / 2,
             color,
         )?;
     }
