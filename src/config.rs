@@ -1,10 +1,10 @@
-use core::panic;
-use std::{fs, path::PathBuf};
+use std::{any::type_name, fs, path::PathBuf};
 
 use crossterm::style::Color;
 use ini::configparser::ini::Ini;
 
 use crate::{
+    eprintln_quit,
     modes::debug,
     rendering::color::{generate_gradient, parse_hex_color, ComputableColor},
 };
@@ -21,46 +21,69 @@ const DEFAULT_CONFIG: &str = include_str!("default_config");
 
 pub fn load_from_file(path: PathBuf, debug_mode: bool) -> Config {
     let mut ini = Ini::new();
-    ini.load(&path.to_str().unwrap()).unwrap();
+    ini.load(
+        &path
+            .to_str()
+            .unwrap_or_else(|| eprintln_quit!("Invalid configuration path")),
+    )
+    .unwrap_or_else(|_| eprintln_quit!("Unable to parse configuration file"));
 
     Config {
-        be_polite: ini.getbool("general", "polite").unwrap().unwrap(),
-        fps: ini.getuint("general", "fps").unwrap().unwrap(),
+        be_polite: get_ini_value(&ini, "general", "polite"),
+        fps: get_ini_value(&ini, "general", "fps"),
         color: load_color(&ini, debug_mode),
-        time_format: ini.get("format", "time").unwrap(),
-        date_format: ini.get("format", "date").unwrap(),
+        time_format: get_ini_value(&ini, "format", "time"),
+        date_format: get_ini_value(&ini, "format", "date"),
     }
 }
 
 pub fn write_default_config(path: PathBuf) -> () {
     // Write default config file to target path
-    let parent = path.parent().unwrap();
+    let parent = path
+        .parent()
+        .unwrap_or_else(|| eprintln_quit!("Invalid configuration path"));
     let _ = fs::create_dir_all(parent);
     let _ = fs::write(path, DEFAULT_CONFIG);
 }
 
-fn load_color(ini: &Ini, debug_mode: bool) -> ComputableColor {
-    let color_mode = ini.get("styling", "color_mode").unwrap();
-
-    match color_mode.as_str() {
-        "term" => {
-            let color = ini.getint("styling", "color_term").unwrap().unwrap();
-            ComputableColor::from(load_term_color(color))
-        }
-        "hex" => {
-            let color = ini.get("styling", "color_hex").unwrap();
-            ComputableColor::from(load_hex_color(&color))
-        }
-        "ansi" => {
-            let color = ini.getint("styling", "color_ansi").unwrap().unwrap();
-            ComputableColor::from(load_ansi_color(color))
-        }
-        "gradient" => load_gradient(ini, debug_mode),
-        _ => panic!("ERROR: Invalid color mode: {}", color_mode),
+fn get_ini_value<T: std::str::FromStr>(ini: &Ini, section: &str, key: &str) -> T {
+    if let Some(value) = ini.get(section, key) {
+        value.parse::<T>().unwrap_or_else(|_| {
+            eprintln_quit!(
+                "Invalid value at {}.{}: Expected {}, got '{}'",
+                section,
+                key,
+                type_name::<T>(),
+                value
+            )
+        })
+    } else {
+        eprintln_quit!("Missing required config key: {}.{}", section, key)
     }
 }
 
-fn load_term_color(value: i64) -> Color {
+fn load_color(ini: &Ini, debug_mode: bool) -> ComputableColor {
+    let color_mode: String = get_ini_value(&ini, "styling", "color_mode");
+
+    match color_mode.as_str() {
+        "term" => {
+            let color: u8 = get_ini_value(&ini, "styling", "color_term");
+            ComputableColor::from(load_term_color(color))
+        }
+        "hex" => {
+            let color: String = get_ini_value(&ini, "styling", "color_hex");
+            ComputableColor::from(load_hex_color(&color))
+        }
+        "ansi" => {
+            let color: u8 = get_ini_value(&ini, "styling", "color_ansi");
+            ComputableColor::from(load_ansi_color(color))
+        }
+        "gradient" => load_gradient(ini, debug_mode),
+        _ => eprintln_quit!("Invalid color mode: {}", color_mode),
+    }
+}
+
+fn load_term_color(value: u8) -> Color {
     match value {
         0 => Color::Black,
         1 => Color::DarkRed,
@@ -78,7 +101,7 @@ fn load_term_color(value: i64) -> Color {
         13 => Color::Magenta,
         14 => Color::Cyan,
         15 => Color::White,
-        _ => panic!("ERROR: Invalid terminal color: {}", value),
+        _ => eprintln_quit!("Invalid terminal color: {}", value),
     }
 }
 
@@ -91,8 +114,8 @@ fn load_hex_color(value: &str) -> Color {
     }
 }
 
-fn load_ansi_color(value: i64) -> Color {
-    Color::AnsiValue(value.try_into().unwrap())
+fn load_ansi_color(value: u8) -> Color {
+    Color::AnsiValue(value)
 }
 
 fn load_gradient(ini: &Ini, debug_mode: bool) -> ComputableColor {
@@ -109,11 +132,9 @@ fn load_gradient(ini: &Ini, debug_mode: bool) -> ComputableColor {
     }
 
     // Generate gradient loop if needed
-    if !debug_mode && ini.getbool("gradient", "gradient_loop").unwrap().unwrap() {
-        let mut loop_keys = keys.clone();
-        loop_keys.reverse();
-        for i in 1..loop_keys.len() {
-            keys.push(*loop_keys.get(i).unwrap());
+    if !debug_mode && get_ini_value(&ini, "gradient", "gradient_loop") {
+        for &key in keys.clone().iter().rev().skip(1) {
+            keys.push(key);
         }
     }
 
@@ -121,11 +142,7 @@ fn load_gradient(ini: &Ini, debug_mode: bool) -> ComputableColor {
     let steps: usize = if debug_mode {
         debug::DEBUG_COLOR_DISPLAY_SIZE * 2
     } else {
-        ini.getuint("gradient", "gradient_steps")
-            .unwrap()
-            .unwrap()
-            .try_into()
-            .unwrap()
+        get_ini_value(&ini, "gradient", "gradient_steps")
     };
     generate_gradient(keys, steps - 1)
 }

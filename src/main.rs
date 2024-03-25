@@ -57,7 +57,10 @@ fn main() -> io::Result<()> {
         PathBuf::from(custom_config)
     } else {
         // Or default one, located in ~/.config/tlock
-        let config_file = config_dir().unwrap().join("tlock").join("config");
+        let config_file = config_dir()
+            .unwrap_or_else(|| eprintln_quit!("Unble to get configuration directory"))
+            .join("tlock")
+            .join("config");
         if !config_file.exists() {
             write_default_config(config_file.clone());
             default_generated = true;
@@ -128,7 +131,7 @@ fn main() -> io::Result<()> {
     }
 
     // Disale raw mode, leave the alternate screen and show the cursor back
-    let _ = terminal::disable_raw_mode().unwrap();
+    let _ = terminal::disable_raw_mode()?;
     execute!(stdout, terminal::LeaveAlternateScreen, cursor::Show)?;
 
     // Be polite

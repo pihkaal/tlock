@@ -86,9 +86,14 @@ pub fn parse_hex_color(value: &str) -> (u8, u8, u8) {
         panic!("ERROR: Invalid hex color: {}", value);
     }
 
-    let r = u8::from_str_radix(&value[0..2], 16).unwrap();
-    let g = u8::from_str_radix(&value[2..4], 16).unwrap();
-    let b = u8::from_str_radix(&value[4..6], 16).unwrap();
+    let extract_component = |index: usize| {
+        u8::from_str_radix(&value[index * 2..(index + 1) * 2], 16)
+            .unwrap_or_else(|_| panic!("error: invalid hex color: {}", value))
+    };
 
-    (r, g, b)
+    (
+        extract_component(0),
+        extract_component(1),
+        extract_component(2),
+    )
 }

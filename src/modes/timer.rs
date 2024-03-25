@@ -10,11 +10,11 @@ use crossterm::{
     terminal::{self, ClearType},
 };
 
-use crate::utils;
 use crate::{
     config::Config,
     rendering::{self, symbols},
 };
+use crate::{eprintln_quit, utils};
 
 struct Timer {
     duration: Duration,
@@ -74,7 +74,8 @@ impl Timer {
 pub fn main_loop(config: &mut Config, duration: &str) -> io::Result<()> {
     let mut stdout = io::stdout();
 
-    let duration = parse_duration::parse(duration).unwrap();
+    let duration = parse_duration::parse(duration)
+        .unwrap_or_else(|_| eprintln_quit!("Invalid duration provided"));
     let mut timer = Timer::new(duration);
 
     let mut quit = false;
