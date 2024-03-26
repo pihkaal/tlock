@@ -2,6 +2,17 @@
 name = "tlock"
 version = "0.1.0"
 edition = "2021"
+authors = ["Pihkaal <hello@pihkaal.me>"]
+
+description = "Fully customizable cross-platform clock for the terminal."
+homepage = "https://github.com/pihkaal/tlock"
+repository = "https://github.com/pihkaal/tlock"
+
+keywords = ["clock", "unixporn", "terminal"]
+categories = ["command-line-utilities"]
+
+readme = "README.md"
+license = "MIT"
 
 [dependencies]
 chrono = "0.4.31"
